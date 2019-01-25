@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="elib">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/src/main/java/elib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/src/main/java/elib" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/src/main/java/elib" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/src/main/java/elib" recursive="false" type="SOURCES" />
+  </library>
+</component>
