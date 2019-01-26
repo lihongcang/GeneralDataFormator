@@ -2,17 +2,17 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class CleanData{
-    private static boolean remove_whitespace = false;
+    private static boolean remove_whitespace = true;
     private static boolean remove_not_ch_en_num = true;
     private static int repeat2one = 6;
     private static boolean remove_repeat_if_whitespace = false;
     private static boolean remove_html_tag = true;
     private static int length_limit = 5;
-    public CleanData(){
+    public CleanData(String clean_data_config_path){
 
         //读取cleanData的配置文件
         Properties properties = new Properties();
-        try (InputStream input = Producer.class.getResourceAsStream("config_cleanData.properties")) {
+        try (InputStream input = Producer.class.getResourceAsStream(clean_data_config_path)) {
             properties.load(input);
             remove_whitespace = Boolean.valueOf(properties.getProperty("remove_whitespace"));
             remove_not_ch_en_num = Boolean.valueOf(properties.getProperty("remove_not_ch_en_num"));
@@ -37,10 +37,12 @@ public class CleanData{
         }else{
             content = content.replaceAll("([^\\s])\\1{"+repeat2one+",}","$1");
         }
+
         //去除乱码
         if(remove_not_ch_en_num){
-            content = content.replaceAll("[ [^\u4E00-\u9FA5] && [^a-zA-Z0-9 \n] && [^~`!@#$%^&*()\\-_+={}\\[\\]|\\:;\"\'<>,.?/] && [^~?！@#￥%……&*（）??+={}【】|、：；“”‘      ’《》，。？/] ]", "");
+            content = content.replaceAll("[[^\u4E00-\u9FA5]&&[^a-zA-Z0-9\\s]&&[^~`!@#$%^&*()\\-_+={}\\[\\]|\\:;\"\'<>,./]&&[^~?！@#￥…（）?+={}【】、：；“”‘ ’《》，。？]]", "");
         }
+
         //去除html标签
         if(remove_html_tag){
             content = content.replaceAll("<script.*?>[\\s\\S]*?<.*?/script>","");
@@ -53,4 +55,5 @@ public class CleanData{
         }
         return content;
     }
+
 }

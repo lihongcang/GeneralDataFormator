@@ -22,6 +22,7 @@ public class Producer implements Runnable{
     private String[] fields;
     //如果数据源是文本，配置路径参数
     private String file_path;
+    private String n2one;
 
 
     public Producer(BlockingQueue<Map<String, String>> blockingQueue,String producer_config_path) {
@@ -44,6 +45,7 @@ public class Producer implements Runnable{
                 case "text":
                     System.out.println("producer is reading your text config");
                     file_path = properties.getProperty("file_path");
+                    n2one=properties.getProperty("n2one");
                     break;
                 default:
                     System.out.println("please config your data source type in config_producer.properties");
@@ -118,21 +120,36 @@ public class Producer implements Runnable{
         DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         int i = 0;
 
-        InputStreamReader read = null;// 考虑到编码格式
+        InputStreamReader read;// 考虑到编码格式
         try {
             read = new InputStreamReader(new FileInputStream(file_path), "UTF-8");
             BufferedReader bufferedReader = new BufferedReader(read);
             String lineTxt;
 
+            int count=1;
+            String content="";
             while ((lineTxt = bufferedReader.readLine()) != null) {
+                if(count < Integer.valueOf(n2one)){
+                    content+=lineTxt+"\n";
+                    count+=1;
+                    continue;
+                }
+
                 Map<String, String> row = new HashMap<>();
-                row.put("content",lineTxt);
+                row.put("content",content);
                 blockingQueue.put(row);
+                count=1;
+                content="";
 
                 i = i+1;
                 if(i%1000 == 0){
                     System.out.println("producer\t"+fmt.format(System.currentTimeMillis()) +"=> " + i);
                 }
+            }
+            if(content!=""){
+                Map<String, String> row = new HashMap<>();
+                row.put("content",content);
+                blockingQueue.put(row);
             }
 
             //查询结束标志

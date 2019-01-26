@@ -1,9 +1,21 @@
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 
+class Article{
+    public String Title;
+    public String Content;
+
+    public Article(String Title,String Content){
+        this.Title=Title;
+        this.Content=Content;
+    }
+}
 public class GetHtmlContent{
     private static boolean appendMode=true;
     private static int depth=6;
@@ -12,9 +24,9 @@ public class GetHtmlContent{
     private static int endLimitCharCount=20;
 
     //读取GetHtmlContent的配置文件
-    public GetHtmlContent(){
+    public GetHtmlContent(String get_html_content_config_path){
         Properties properties = new Properties();
-        try (InputStream input = Producer.class.getResourceAsStream("config_GetHtmlContent.properties")) {
+        try (InputStream input = Producer.class.getResourceAsStream(get_html_content_config_path)) {
             properties.load(input);
             appendMode = Boolean.valueOf(properties.getProperty("appendMode"));
             depth = Integer.valueOf(properties.getProperty("depth"));
@@ -23,9 +35,49 @@ public class GetHtmlContent{
             endLimitCharCount = Integer.valueOf(properties.getProperty("endLimitCharCount"));
 
         } catch (Exception e) {
-            System.out.println("error appeared when read the config file");
+            System.out.println("error appeared when read the gethtmlcontent config file");
             e.printStackTrace();
         }
+    }
+
+    public static Article getArticle(String html){
+
+        if(html.split("\n").length<10){
+            html = html.replace(">",">\n");
+        }
+        String body = "";
+        Pattern p = Pattern.compile("(<body.*?</body>)",Pattern.DOTALL);
+        Matcher m = p.matcher(html);
+        if(m.find()){
+            body = m.group(1);
+            body = Pattern.compile("<script.*?>.*?</script>",Pattern.DOTALL).matcher(body).replaceAll("");
+            //    <div class="recommend-item-box recommend-ad-box"><div id="kp_box_67" data-pid="67" data-track-view='{"mod":"kp_popu_67-809","con":",,"}' data-track-click='{"mod":"kp_popu_67-809","con":",,"}'><script    async="async"    charset="utf-8"    src="https://shared.ydstatic.com/js/yatdk/3.0.1/stream.js"    data-id="6cb24153a03289ff3597c7aab4b69fe9"    data-div-Style="width:100%;"data-tit-Style="margin-bottom: 6px; font-size: 18px; line-height: 24px; color: #3d3d3d;display: inline-block;font-weight:bold;"data-des-Style="font-size: 13px; line-height: 22px; white-space: normal; color: #999;"data-img-Style="float:left;margin-right:15px;width:90px;height:60px;">
+            //    </script></div></div> 出了错误
+            //body = body.replaceAll("<script.*?>[\\s\\S]*?</script>","");
+            body = Pattern.compile("<style.*?>.*?</style>",Pattern.DOTALL).matcher(body).replaceAll("");
+            body = Pattern.compile("<!--.*?-->",Pattern.DOTALL).matcher(body).replaceAll("");
+            body = body.replaceAll("</a>","</a>\n");
+            body = formatTag(body);
+        }
+
+        String content = getContent(body);
+        String title = getTitle(html);
+        Article article = new Article(title,content);
+
+        return article;
+    }
+    public static String formatTag(String body){
+        Pattern p = Pattern.compile("(<.*?>)",Pattern.DOTALL);
+        Matcher m = p.matcher(body);
+        while(m.find()){
+            String temp = m.group(1).replace("\n","");
+            //如果使用replaceAll的话，可能因为m.group(1)中包含异常报错
+            body = body.replace(m.group(1),temp);
+            //这个错误也很难发现
+            //body = m.replaceFirst(temp);
+        }
+        //System.out.println(body);
+        return body;
     }
     public  static String getContent(String body){
         String[] orgLines = null;
@@ -36,12 +88,11 @@ public class GetHtmlContent{
 
         for(int i=0;i<orgLines.length;i++){
             String lineInfo = orgLines[i];
-            lineInfo = lineInfo.replaceAll("</p>|<br.*?>","[crlf]");
+            lineInfo = lineInfo.replaceAll("</p>|<br.*?/>","[crlf]");
             lines[i] = lineInfo.replaceAll("<.*?>","").trim();
         }
 
-        StringBuilder sb = new StringBuilder();
-        StringBuilder orgsb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
 
         int preTextLen = 0;
         int startPos = -1;
@@ -70,9 +121,8 @@ public class GetHtmlContent{
                     if(startPos == -1){
                         startPos = i;
                     }
-                    for(int j=startPos;j<i;j++){
+                    for(int j=startPos;j<=i;j++){
                         sb.append(lines[j]);
-                        orgsb.append(orgLines[j]);
                     }
                 }
             }
@@ -85,7 +135,6 @@ public class GetHtmlContent{
                 }
 
                 sb.append(lines[i]);
-                orgsb.append(orgLines[i]);
             }
             preTextLen = len;
         }
@@ -112,52 +161,24 @@ public class GetHtmlContent{
         }
         return title;
     }
-    public static Article getArticle(String html){
 
-        if(html.split("\n").length<10){
-            html = html.replace(">",">\n");
-        }
-
-        String body = "";
-        Pattern p = Pattern.compile("<body.*?>([\\s\\S]*?)</body>");
-        Matcher m = p.matcher(html);
-        if(m.find()){
-            body = m.group(1);
-            body = body.replaceAll("<script.*?>[\\s\\S]*?</script>","");
-            body = body.replaceAll("<style.*?>[\\s\\S]*?</style>","");
-            body = body.replaceAll("<!--.*?-->","");
-            body = body.replaceAll("</a>","</a>\n");
-            body = formatTag(body);
-        }
-
-        String content;
-        String title;
-        content = getContent(body);
-        title = getTitle(html);
-        Article article = new Article(title,content);
-
-        return article;
-    }
-    public static String formatTag(String body){
-        Pattern p = Pattern.compile("(<.*?>)",Pattern.DOTALL);
-        Matcher m = p.matcher(body);
-        while(m.find()){
-            String temp = m.group(1).replaceFirst("\n","");
-            //System.out.println(temp);
-            body = body.replaceAll(m.group(1),temp);
-            //这个错误也很难发现
-            //body = m.replaceFirst(temp);
-        }
-        //System.out.println(body);
-        return body;
-    }
-    public static class Article{
-        public String Title;
-        public String Content;
-
-        public Article(String Title,String Content){
-            this.Title=Title;
-            this.Content=Content;
-        }
-    }
+    //测试
+//    public static void main(String[] args){
+//        String Url = "https://blog.csdn.net/u014595019/article/details/44035981";
+//        StringBuffer sb = new StringBuffer();
+//        try{
+//            URL url = new URL(Url);
+//            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+//            String line;
+//            while((line=in.readLine()) != null){
+//                sb.append(line);
+//                sb.append("\n");
+//            }
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
+//
+//        Article article = getArticle(String.valueOf(sb));
+//        System.out.println(article.Title);
+//    }
 }

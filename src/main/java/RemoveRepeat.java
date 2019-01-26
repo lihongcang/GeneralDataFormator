@@ -3,19 +3,23 @@ import org.ansj.domain.Term;
 import org.ansj.recognition.impl.StopRecognition;
 import org.ansj.splitWord.analysis.ToAnalysis;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.math.BigInteger;
 import java.security.MessageDigest;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RemoveRepeat {
-    private static Map<String, LinkedList<String>> map;
+    private static Map<String, LinkedList<String>> map = new HashMap<>();
 
+    public RemoveRepeat(String remove_repeat_config_path){
+        Properties properties = new Properties();
+        try (InputStream input = Producer.class.getResourceAsStream(remove_repeat_config_path)) {
+            properties.load(input);
+        } catch (Exception e) {
+            System.out.println("error appeared when read the config file");
+            e.printStackTrace();
+        }
+    }
     @SuppressWarnings("unchecked")
     public static boolean removeRepeat(String content) {
         boolean flagn = true;

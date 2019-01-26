@@ -141,7 +141,6 @@ public class Worker implements Runnable{
                     break;
                 }
 
-                System.out.println(content);
                 bufferedWriter.write(content+split_string);
 
                 //打印时间
