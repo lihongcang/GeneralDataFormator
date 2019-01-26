@@ -1,5 +1,6 @@
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 public class CleanData{
     private static boolean remove_whitespace = true;
@@ -56,4 +57,23 @@ public class CleanData{
         return content;
     }
 
+    public static void main(String[] args){
+        String content = "《上 海金 融 ）２０１４年 第 １期　\n" +
+                "。。　。。　。。　。。　。。。　。。　－。。　。。　。。　。。。。。。。　。。’。。’。。。。。’。。’。。’。。’。。　。。’　。’。。’。。’。。’。。’。。　。。　。。’。。　。。。　。。　。。　。。。。。　。。　。。’。。’。。’。。’。。’。。’。。’。。　。。；　\n" +
+                "货币政策对股票收益率的非对称性影响研究 术　\n" +
+                "０：．。。．◆　（）。．　）．◆。。．◆ｎ。。．。。◆．。。．。。．。。．。。．。。．◆。。．ｃ。。◆．。。．　ｕ◆．。。．◆。。．◆。。◆．。。◆．。。．◆。。．。。．　（ｊ。．◆。。．。（）　（，）◆．。。．。。．◆。。．◆。。◆．。。◆．。。．。。．。　（）．　、。◆．　（］◆．。。．◆。。◆．。。．。。．。。．　（　．　．　（　、（、．．”．、．◆　。；：　\n" +
+                "毛 泽 盛　，潘 吟 斐　\n" +
+                "１，２ 南 京 师 范 大 学 商 学 院 ，　 江 苏                  南京 ２１００２３）　";
+        content = content.replaceAll("([^\\s])\\1{5,}","$1");    //去三个及以>上叠词为一个词
+
+        content = content.replaceAll("[[^\u4E00-\u9FA5]&&[^a-zA-Z0-9\\s]&&[^~`!@#$%^&*()\\-_+={}\\[\\]|\\:;\"\'<>,./]&&[^~?！@#￥…（）?+={}【】、：；“”‘ ’《》，。？]]", "");    //除去乱码
+
+        //content = content.replaceAll("<script.*?>[\\s\\S]*?<.*?/script>","");
+        content = Pattern.compile("<script.*?>.*?</script>",Pattern.DOTALL).matcher(content).replaceAll("");
+        content = Pattern.compile("<style.*?>.*?</style>",Pattern.DOTALL).matcher(content).replaceAll("");
+        content = content.replaceAll("&nbsp","");
+        content = content.replaceAll("<[^>\\d]+.*?>","");
+        System.out.println(content);
+
+    }
 }

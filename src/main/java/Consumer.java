@@ -85,7 +85,6 @@ public class Consumer implements Runnable{
             String processed_content=null;
             switch (function_num){
                 case 1:
-                    System.out.println("test");
                     if(if_custom_config){
                         CleanData cleandata = new CleanData(function_config_file_path);
                         processed_content = cleandata.cleanData(content);
@@ -95,7 +94,6 @@ public class Consumer implements Runnable{
                         break;
                     }
                 case 2:
-                    System.out.println("test");
                     if(if_custom_config){
                         GetHtmlContent gethtmlcontent = new GetHtmlContent(function_config_file_path);
                         Article article = gethtmlcontent.getArticle(content);
